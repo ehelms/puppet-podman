@@ -23,6 +23,10 @@
 #   usage.  This allows running a container with nothing but an image defined.
 #   See the "data/common.yaml" file for default values.
 #
+# @param enable_service
+#   Whether the systemd service should be enabled and started. Set to false for
+#   services that should be controlled by systemd timers. Default is true.
+#
 # @example
 #   podman::quadlet { 'jenkins':
 #     user     => 'jenkins',
@@ -56,6 +60,7 @@ define podman::quadlet (
   String $user                      = 'root',
   Hash $defaults                    = {}, # Values in module hiera
   Hash $settings                    = {},
+  Boolean $enable_service           = true,
 ) {
   $podman_version = fact('podman.version')
 
@@ -103,10 +108,19 @@ define podman::quadlet (
           notify => File[$quadlet_file],
         }
       } else {
-        service { $service:
-          ensure    => running,
-          require   => $notify_systemd,
-          subscribe => File[$quadlet_file],
+        if $enable_service {
+          service { $service:
+            ensure    => running,
+            require   => $notify_systemd,
+            subscribe => File[$quadlet_file],
+          }
+        } else {
+          service { $service:
+            ensure    => stopped,
+            enable    => false,
+            require   => $notify_systemd,
+            subscribe => File[$quadlet_file],
+          }
         }
       }
     } else {
@@ -120,8 +134,8 @@ define podman::quadlet (
         }
       } else {
         systemd::user_service { $service:
-          ensure    => true,
-          enable    => true,
+          ensure    => $enable_service,
+          enable    => $enable_service,
           user      => $user,
           unit      => "${service}.service",
           require   => $notify_systemd,

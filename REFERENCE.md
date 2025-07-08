@@ -737,6 +737,7 @@ The following parameters are available in the `podman::quadlet` defined type:
 * [`quadlet_type`](#-podman--quadlet--quadlet_type)
 * [`settings`](#-podman--quadlet--settings)
 * [`defaults`](#-podman--quadlet--defaults)
+* [`enable_service`](#-podman--quadlet--enable_service)
 
 ##### <a name="-podman--quadlet--ensure"></a>`ensure`
 
@@ -796,6 +797,15 @@ usage.  This allows running a container with nothing but an image defined.
 See the "data/common.yaml" file for default values.
 
 Default value: `{}`
+
+##### <a name="-podman--quadlet--enable_service"></a>`enable_service`
+
+Data type: `Boolean`
+
+Whether the systemd service should be enabled and started. Set to false for
+services that should be controlled by systemd timers.
+
+Default value: `true`
 
 ### <a name="podman--rootless"></a>`podman::rootless`
 

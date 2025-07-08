@@ -18,13 +18,37 @@ describe 'podman::quadlet' do
         is_expected.to contain_file('/etc/containers/systemd/container1.container').with(
           {
             'ensure' => 'present',
-            'notify' => 'Systemd::Daemon_reload[podman]',
+            'notify' => 'Systemd::Daemon_reload[container1]',
           },
         )
-        is_expected.to contain_systemd__daemon_reload('podman')
+        is_expected.to contain_systemd__daemon_reload('container1')
         is_expected.to contain_service('container1').only_with(
           'ensure' => 'running',
-          'require' => 'Systemd::Daemon_reload[podman]',
+          'require' => 'Systemd::Daemon_reload[container1]',
+          'subscribe' => 'File[/etc/containers/systemd/container1.container]',
+        )
+      end
+    end
+
+    context "with root container on #{os} with enable_service => false" do
+      let(:facts) do
+        super().merge({ 'podman' => { 'version' => '4.4' } })
+      end
+      let(:params) { { 'enable_service' => false, 'settings' => { 'Container' => { 'Image' => 'example.com/container1:latest', 'PublishPort' => '8080:8080', } } } }
+
+      it do
+        is_expected.to compile
+        is_expected.to contain_file('/etc/containers/systemd/container1.container').with(
+          {
+            'ensure' => 'present',
+            'notify' => 'Systemd::Daemon_reload[container1]',
+          },
+        )
+        is_expected.to contain_systemd__daemon_reload('container1')
+        is_expected.to contain_service('container1').only_with(
+          'ensure' => 'stopped',
+          'enable' => false,
+          'require' => 'Systemd::Daemon_reload[container1]',
           'subscribe' => 'File[/etc/containers/systemd/container1.container]',
         )
       end
